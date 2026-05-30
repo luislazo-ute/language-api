@@ -92,3 +92,6 @@ TEMPLATES = [{
         'django.contrib.messages.context_processors.messages',
     ]},
 }]
+
+# Static files for production
+STATIC_ROOT = BASE_DIR / "staticfiles"
