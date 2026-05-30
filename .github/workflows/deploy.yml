@@ -98,8 +98,8 @@ jobs:
             uv run python manage.py collectstatic --noinput --clear
 
             echo "── 6. Reiniciando servicios ──"
-            sudo -n /usr/bin/systemctl restart gunicorn-language-api
-            sudo -n /usr/bin/systemctl restart nginx
+            /usr/bin/systemctl restart gunicorn-language-api
+            /usr/bin/systemctl restart nginx
 
             echo "── 7. Verificando Django admin ──"
             sleep 3
