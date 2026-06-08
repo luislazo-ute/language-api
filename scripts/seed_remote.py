@@ -9,6 +9,7 @@ Uso:
     python3 scripts/seed_remote.py
 """
 import json
+import random
 import sys
 import urllib.request
 import urllib.error
@@ -318,35 +319,55 @@ LEVELS = [
 
 
 def build_exercises(lang_nombre, vocab):
-    """Genera 4 ejercicios a partir del vocabulario de la leccion."""
+    """Genera un ejercicio por cada palabra del vocabulario de la leccion.
+
+    Alterna opcion multiple y traduccion, y baraja las opciones para que la
+    respuesta correcta no quede siempre en la misma posicion.
+    """
     exercises = []
-    # 2 de opcion multiple (es -> objetivo)
-    for i in range(2):
-        es, target = vocab[i]
-        distractors = [v[1] for v in vocab if v[1] != target][:3]
-        options = distractors + [target]
-        exercises.append({
-            "tipo": "multiple_choice",
-            "pregunta": f"¿Cómo se dice «{es}» en {lang_nombre.lower()}?",
-            "opciones": options,
-            "respuesta_correcta": target,
-            "puntos": 10,
-        })
-    # 2 de traduccion (es -> objetivo)
-    for i in range(2, 4):
-        es, target = vocab[i]
-        exercises.append({
-            "tipo": "translate",
-            "pregunta": f"Traduce al {lang_nombre.lower()}: «{es}»",
-            "opciones": [],
-            "respuesta_correcta": target,
-            "puntos": 15,
-        })
+    todas = [v[1] for v in vocab]
+    for i, (es, target) in enumerate(vocab):
+        if i % 2 == 0:
+            # Opcion multiple: 3 distractores + la correcta, barajadas.
+            distractors = [t for t in todas if t != target]
+            random.shuffle(distractors)
+            options = distractors[:3] + [target]
+            random.shuffle(options)
+            exercises.append({
+                "tipo": "multiple_choice",
+                "pregunta": f"¿Cómo se dice «{es}» en {lang_nombre.lower()}?",
+                "opciones": options,
+                "respuesta_correcta": target,
+                "puntos": 10,
+            })
+        else:
+            exercises.append({
+                "tipo": "translate",
+                "pregunta": f"Traduce al {lang_nombre.lower()}: «{es}»",
+                "opciones": [],
+                "respuesta_correcta": target,
+                "puntos": 15,
+            })
     return exercises
+
+
+def wipe_languages():
+    """Borra todos los idiomas (cascada elimina niveles/lecciones/ejercicios)."""
+    status, data = call("GET", "/languages/?page_size=1000", auth=False)
+    results = data.get("results", data) if data else []
+    if not results:
+        print("No hay idiomas previos que borrar.")
+        return
+    for lang in results:
+        st, _ = call("DELETE", f"/languages/{lang['id']}/")
+        marca = "ok" if st in (200, 204) else f"FALLO {st}"
+        print(f"  - borrado {lang['nombre']} ({marca})")
 
 
 def main():
     login()
+    print("\n--- Limpiando catálogo anterior ---")
+    wipe_languages()
     totals = {"lang": 0, "level": 0, "lesson": 0, "ex": 0}
 
     for codigo, info in LANGUAGES.items():
