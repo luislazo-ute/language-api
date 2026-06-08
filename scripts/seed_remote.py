@@ -326,28 +326,19 @@ def build_exercises(lang_nombre, vocab):
     """
     exercises = []
     todas = [v[1] for v in vocab]
-    for i, (es, target) in enumerate(vocab):
-        if i % 2 == 0:
-            # Opcion multiple: 3 distractores + la correcta, barajadas.
-            distractors = [t for t in todas if t != target]
-            random.shuffle(distractors)
-            options = distractors[:3] + [target]
-            random.shuffle(options)
-            exercises.append({
-                "tipo": "multiple_choice",
-                "pregunta": f"¿Cómo se dice «{es}» en {lang_nombre.lower()}?",
-                "opciones": options,
-                "respuesta_correcta": target,
-                "puntos": 10,
-            })
-        else:
-            exercises.append({
-                "tipo": "translate",
-                "pregunta": f"Traduce al {lang_nombre.lower()}: «{es}»",
-                "opciones": [],
-                "respuesta_correcta": target,
-                "puntos": 15,
-            })
+    for es, target in vocab:
+        # Todos de opcion multiple: 3 distractores + la correcta, barajadas.
+        distractors = [t for t in todas if t != target]
+        random.shuffle(distractors)
+        options = distractors[:3] + [target]
+        random.shuffle(options)
+        exercises.append({
+            "tipo": "multiple_choice",
+            "pregunta": f"¿Cómo se dice «{es}» en {lang_nombre.lower()}?",
+            "opciones": options,
+            "respuesta_correcta": target,
+            "puntos": 10,
+        })
     return exercises
 
 
